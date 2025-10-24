@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '11'
@@ -36,7 +36,7 @@ jobs:
         run: flutter build apk --release
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: hczmusic-apk
           path: build/app/outputs/flutter-apk/app-release.apk
@@ -45,7 +45,7 @@ jobs:
         run: flutter build appbundle --release
 
       - name: Upload app bundle
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: hczmusic-bundle
           path: build/app/outputs/bundle/release/app-release.aab
