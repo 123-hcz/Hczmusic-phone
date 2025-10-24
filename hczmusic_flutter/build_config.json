@@ -1,0 +1,32 @@
+{
+  "app_name": "HCZ Music",
+  "package_name": "com.hczmusic.player",
+  "version": "1.0.0",
+  "build_number": 1,
+  "min_sdk_version": 21,
+  "target_sdk_version": 33,
+  "compile_sdk_version": 33,
+  "flutter_version": "3.24.0",
+  "build_types": {
+    "debug": {
+      "signing_config": "debug",
+      "minify_enabled": false,
+      "shrink_resources": false
+    },
+    "release": {
+      "signing_config": "release",
+      "minify_enabled": true,
+      "shrink_resources": true
+    }
+  },
+  "flavors": {
+    "dev": {
+      "application_id_suffix": ".dev",
+      "version_name_suffix": "-dev"
+    },
+    "prod": {
+      "application_id_suffix": "",
+      "version_name_suffix": ""
+    }
+  }
+}
