@@ -10,6 +10,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: hczmusic_flutter
+
     steps:
       - uses: actions/checkout@v4
 
@@ -25,42 +29,29 @@ jobs:
           flutter-version: '3.24.0'
           channel: 'stable'
 
-      - name: Navigate to Flutter project directory
-        run: cd hczmusic_flutter
-
       - name: Get dependencies
-        run: |
-          cd hczmusic_flutter
-          flutter pub get
+        run: flutter pub get
 
       - name: Analyze project
-        run: |
-          cd hczmusic_flutter
-          flutter analyze
+        run: flutter analyze
 
       - name: Run tests
-        run: |
-          cd hczmusic_flutter
-          flutter test
+        run: flutter test
 
       - name: Build APK
-        run: |
-          cd hczmusic_flutter
-          flutter build apk --release
+        run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: hczmusic-apk
-          path: hczmusic_flutter/build/app/outputs/flutter-apk/app-release.apk
+          path: /build/app/outputs/flutter-apk/app-release.apk
 
       - name: Build app bundle
-        run: |
-          cd hczmusic-phone/hczmusic_flutter
-          flutter build appbundle --release
+        run: flutter build appbundle --release
 
       - name: Upload app bundle
         uses: actions/upload-artifact@v4
         with:
           name: hczmusic-bundle
-          path: hczmusic_flutter/build/app/outputs/bundle/release/app-release.aab
+          path: /build/app/outputs/bundle/release/app-release.aab
