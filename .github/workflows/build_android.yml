@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: hczmusic-apk
-          path: /build/app/outputs/flutter-apk/app-release.apk
+          path: hczmusic_flutter/build/app/outputs/flutter-apk/app-release.apk
 
       - name: Build app bundle
         run: flutter build appbundle --release
@@ -54,4 +54,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: hczmusic-bundle
-          path: /build/app/outputs/bundle/release/app-release.aab
+          path: hczmusic_flutter/build/app/outputs/bundle/release/app-release.aab
