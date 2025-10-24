@@ -48,7 +48,7 @@
 
 ```bash
 # 进入项目目录
-cd hczmusic_flutter
+cd hczmusic-phone/hczmusic_flutter
 
 # 运行构建脚本
 ./scripts/build_android.sh
@@ -67,6 +67,9 @@ cd hczmusic_flutter
 ### 手动构建
 
 ```bash
+# 进入项目目录
+cd hczmusic-phone/hczmusic_flutter
+
 # 构建发布版 APK
 flutter build apk --release
 
