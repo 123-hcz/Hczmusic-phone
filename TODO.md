@@ -155,3 +155,11 @@
 
 ## 重大更新记录
 2025-01-07: 完成了与hmusicapi.胡.fun的API集成，应用现在可以获取真实的音乐数据，替代了原有的模拟数据。
+2025-01-07: 添加了GitHub Actions工作流，支持自动构建Android APK和AAB文件。
+
+## GitHub Actions 自动构建
+- 工作流文件: `.github/workflows/build_android.yml` (项目根目录)
+- 触发条件: 推送到main/master分支或PR时
+- 构建产物: APK和AAB文件
+- 构建环境: Ubuntu, Flutter 3.24.0, Java 11
+- 构建步骤: 依赖获取 -> 代码分析 -> 测试 -> APK构建 -> AAB构建 -> 产物上传
