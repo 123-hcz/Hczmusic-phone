@@ -21,8 +21,8 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const DiscoverScreen(),
-    const LibraryScreen(),
     const SearchScreen(),
+    const LibraryScreen(),
   ];
 
   @override

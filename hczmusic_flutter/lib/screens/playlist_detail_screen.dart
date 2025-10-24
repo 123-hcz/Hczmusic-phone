@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/song.dart';
+import '../services/api_service.dart';
 import '../widgets/song_list_item.dart';
 import '../theme/theme_manager.dart';
 
@@ -31,13 +32,38 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
   List<Song> _filteredSongs = [];
   int _sortField = 0; // 0: name, 1: artist, 2: album, 3: duration
   bool _sortAscending = true;
+  late ApiService _apiService;
 
   @override
   void initState() {
     super.initState();
-    _songs = widget.songs ?? [];
-    _filteredSongs = List.from(_songs);
-    _isLoading = false;
+    _apiService = ApiService();
+    _loadPlaylistDetail();
+  }
+
+  Future<void> _loadPlaylistDetail() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 如果传入了歌曲列表，直接使用；否则从API加载
+      if (widget.songs != null && widget.songs!.isNotEmpty) {
+        _songs = widget.songs!;
+      } else {
+        final detail = await _apiService.getPlaylistDetail(widget.playlistId);
+        _songs = detail.tracks;
+      }
+      _filteredSongs = List.from(_songs);
+    } catch (e) {
+      print('加载歌单详情失败: $e');
+      _songs = [];
+      _filteredSongs = [];
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _searchSongs(String query) {

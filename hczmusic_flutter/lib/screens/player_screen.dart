@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
+import '../models/song.dart';
+import '../services/audio_player_handler.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key});
@@ -12,238 +14,232 @@ class PlayerScreen extends StatefulWidget {
 class _PlayerScreenState extends State<PlayerScreen> {
   @override
   Widget build(BuildContext context) {
-    return AudioServiceBuilder(
-      builder: (context) {
-        final AudioPlayerState? playerState = AudioService.maybePlaybackState;
-        final MediaItem? currentMediaItem = AudioService.currentMediaItem;
-        
-        return Scaffold(
-          body: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF6a11cb),
-                  Color(0xFF2575fc),
+    final audioHandler = context.read<AudioPlayerHandler>();
+    
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 顶部导航
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      '现在播放',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: () {},
+                  ),
                 ],
               ),
             ),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  // 顶部导航
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        const Text(
-                          '正在播放',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.more_vert, color: Colors.white),
-                          onPressed: () {},
-                        ),
-                      ],
+            
+            // 专辑封面
+            Expanded(
+              flex: 2,
+              child: StreamBuilder<MediaPlayerState?>(
+                stream: audioHandler.playbackState,
+                builder: (context, snapshot) {
+                  final playerState = snapshot.data;
+                  final currentMediaItem = playerState?.updatePosition.item;
+                  
+                  return Container(
+                    padding: const EdgeInsets.all(32),
+                    child: Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: currentMediaItem != null
+                            ? Image.network(
+                                currentMediaItem.artUri.toString(),
+                                width: 300,
+                                height: 300,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.asset(
+                                'assets/images/default_album_cover.jpg',
+                                width: 300,
+                                height: 300,
+                                fit: BoxFit.cover,
+                              ),
+                      ),
                     ),
+                  );
+                },
+              ),
+            ),
+            
+            // 歌曲信息
+            StreamBuilder<MediaPlayerState?>(
+              stream: audioHandler.playbackState,
+              builder: (context, snapshot) {
+                final playerState = snapshot.data;
+                final currentMediaItem = playerState?.updatePosition.item;
+                
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    children: [
+                      Text(
+                        currentMediaItem?.title ?? '未知歌曲',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        currentMediaItem?.artist ?? '未知艺术家',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Theme.of(context).hintColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // 专辑封面
-                  if (currentMediaItem != null)
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                );
+              },
+            ),
+            
+            // 进度条
+            StreamBuilder<PositionData>(
+              stream: audioHandler.position,
+              builder: (context, snapshot) {
+                final positionData = snapshot.data ?? const PositionData.zero();
+                
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: Column(
+                    children: [
+                      Slider(
+                        value: positionData.position.inMilliseconds.toDouble(),
+                        min: 0.0,
+                        max: positionData.duration.inMilliseconds.toDouble(),
+                        onChanged: (value) {
+                          audioHandler.seek(Duration(milliseconds: value.toInt()));
+                        },
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Hero(
-                            tag: 'album_art_${currentMediaItem.id}',
-                            child: Container(
-                              width: MediaQuery.of(context).size.width * 0.7,
-                              height: MediaQuery.of(context).size.width * 0.7,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 10),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: CachedNetworkImage(
-                                  imageUrl: currentMediaItem.artUri?.toString() ?? '',
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) => Container(
-                                    color: Colors.grey[300],
-                                    child: const Icon(Icons.music_note, size: 80),
-                                  ),
-                                  errorWidget: (context, url, error) => Container(
-                                    color: Colors.grey[300],
-                                    child: const Icon(Icons.music_note, size: 80),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          
-                          const SizedBox(height: 32),
-                          
-                          // 歌曲信息
                           Text(
-                            currentMediaItem.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                            positionData.position.toString().split('.').first,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).hintColor,
                             ),
-                            textAlign: TextAlign.center,
                           ),
-                          
-                          const SizedBox(height: 8),
-                          
                           Text(
-                            currentMediaItem.artist ?? 'Unknown Artist',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 18,
+                            positionData.duration.toString().split('.').first,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).hintColor,
                             ),
-                          ),
-                          
-                          const SizedBox(height: 32),
-                          
-                          // 进度条
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                            child: Column(
-                              children: [
-                                StreamBuilder<Duration>(
-                                  stream: AudioService.position,
-                                  builder: (context, snapshot) {
-                                    final duration = playerState?.duration ?? Duration.zero;
-                                    final position = snapshot.data ?? Duration.zero;
-                                    
-                                    return Column(
-                                      children: [
-                                        Slider(
-                                          value: position.inMilliseconds.toDouble(),
-                                          max: duration.inMilliseconds.toDouble(),
-                                          onChanged: (value) {
-                                            AudioService.seekTo(Duration(milliseconds: value.toInt()));
-                                          },
-                                          activeColor: Colors.white,
-                                          inactiveColor: Colors.white38,
-                                        ),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              _formatDuration(position),
-                                              style: const TextStyle(
-                                                color: Colors.white70,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                            Text(
-                                              _formatDuration(duration),
-                                              style: const TextStyle(
-                                                color: Colors.white70,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                          
-                          const SizedBox(height: 32),
-                          
-                          // 播放控制按钮
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.shuffle, color: Colors.white, size: 30),
-                                onPressed: () {},
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.skip_previous, color: Colors.white, size: 40),
-                                onPressed: () => AudioService.skipToPrevious(),
-                              ),
-                              Container(
-                                width: 70,
-                                height: 70,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 5),
-                                    ),
-                                  ],
-                                ),
-                                child: IconButton(
-                                  icon: Icon(
-                                    playerState?.playing == true 
-                                        ? Icons.pause 
-                                        : Icons.play_arrow,
-                                    color: Colors.black,
-                                    size: 35,
-                                  ),
-                                  onPressed: () {
-                                    if (playerState?.playing == true) {
-                                      AudioService.pause();
-                                    } else {
-                                      AudioService.play();
-                                    }
-                                  },
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.skip_next, color: Colors.white, size: 40),
-                                onPressed: () => AudioService.skipToNext(),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.repeat, color: Colors.white, size: 30),
-                                onPressed: () {},
-                              ),
-                            ],
                           ),
                         ],
                       ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            
+            // 播放控制
+            StreamBuilder<PlayerState>(
+              stream: audioHandler.playerState,
+              builder: (context, snapshot) {
+                final playerState = snapshot.data?.processingState ?? AudioProcessingState.idle;
+                final isPlaying = snapshot.data?.playing ?? false;
+                
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.shuffle),
+                        onPressed: () => audioHandler.setShuffleMode(AudioServiceShuffleMode.all),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.skip_previous),
+                        onPressed: () => audioHandler.skipToPrevious(),
+                        iconSize: 36,
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          if (playerState == AudioProcessingState.idle) {
+                            // 如果没有播放列表，需要先设置播放列表
+                          } else {
+                            isPlaying ? audioHandler.pause() : audioHandler.play();
+                          }
+                        },
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          child: Icon(
+                            isPlaying ? Icons.pause : Icons.play_arrow,
+                            color: Colors.white,
+                            size: 36,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.skip_next),
+                        onPressed: () => audioHandler.skipToNext(),
+                        iconSize: 36,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.repeat),
+                        onPressed: () => audioHandler.setRepeatMode(AudioServiceRepeatMode.none),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            
+            // 歌词
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      '歌词功能将在后续版本中添加\n\n此功能需要从API获取歌词数据\n\n目前显示的是占位文本',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        height: 1.6,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                ],
+                  ),
+                ),
               ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    String minutes = twoDigits(duration.inMinutes.remainder(60));
-    String seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$minutes:$seconds';
   }
 }

@@ -37,14 +37,14 @@ class BottomNavBar extends StatelessWidget {
               label: '发现',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.library_music_outlined),
-              activeIcon: Icon(Icons.library_music),
-              label: '音乐库',
-            ),
-            BottomNavigationBarItem(
               icon: Icon(Icons.search_outlined),
               activeIcon: Icon(Icons.search),
               label: '搜索',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outlined),
+              activeIcon: Icon(Icons.person),
+              label: '我的',
             ),
           ],
         ),

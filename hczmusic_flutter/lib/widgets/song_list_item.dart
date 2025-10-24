@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../models/song.dart';
+import '../services/audio_player_handler.dart';
+import '../screens/player_screen.dart';
 
 class SongListItem extends StatelessWidget {
   final Song song;
@@ -16,6 +19,8 @@ class SongListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final audioHandler = context.read<AudioPlayerHandler>();
+
     return ListTile(
       leading: Container(
         width: 50,
@@ -82,11 +87,42 @@ class SongListItem extends StatelessWidget {
           if (showPlayButton)
             IconButton(
               icon: const Icon(Icons.play_arrow),
-              onPressed: onTap,
+              onPressed: () {
+                // 播放歌曲
+                onTap?.call();
+              },
+            ) else
+            IconButton(
+              icon: const Icon(Icons.play_circle_filled_outlined),
+              onPressed: () async {
+                // 播放歌曲
+                await audioHandler.playSong(song);
+                
+                // 跳转到播放器界面
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PlayerScreen(),
+                  ),
+                );
+              },
             ),
         ],
       ),
-      onTap: onTap,
+      onTap: () async {
+        // 如果没有指定onTap，直接播放歌曲
+        if (onTap == null) {
+          await audioHandler.playSong(song);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const PlayerScreen(),
+            ),
+          );
+        } else {
+          onTap?.call();
+        }
+      },
     );
   }
 
